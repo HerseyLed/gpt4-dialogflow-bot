@@ -7,7 +7,10 @@ const app = express();
 app.use(bodyParser.json());
 
 app.post("/webhook", async (req, res) => {
-  const prompt = req.body.queryResult.queryText;
+  console.log("➡️ Webhook çağrıldı");
+
+  const prompt = req.body.queryResult?.queryText || "Merhaba";
+  console.log("🎯 Kullanıcı mesajı:", prompt);
 
   try {
     const gptResponse = await axios.post(
@@ -15,24 +18,29 @@ app.post("/webhook", async (req, res) => {
       {
         model: "gpt-4",
         messages: [
-          { role: "system", content: "Sen bir e-ticaret müşteri temsilcisisin. Kısa, net, ilgili ve Türkçe cevaplar ver." },
+          {
+            role: "system",
+            content: "Sen bir e-ticaret müşteri temsilcisisin. Türkçe, kısa ve ilgili cevaplar ver.",
+          },
           { role: "user", content: prompt },
         ],
       },
       {
         headers: {
-          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
           "Content-Type": "application/json",
         },
       }
     );
 
     const reply = gptResponse.data.choices[0].message.content;
+    console.log("✅ GPT yanıtı:", reply);
+
     return res.json({
       fulfillmentText: reply,
     });
   } catch (error) {
-    console.error("GPT-4 API error:", error.response?.data || error.message);
+    console.error("❌ GPT-4 API Hatası:", error.response?.data || error.message);
     return res.json({
       fulfillmentText: "Üzgünüm, şu anda size yardımcı olamıyorum.",
     });
@@ -40,10 +48,10 @@ app.post("/webhook", async (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  res.send("GPT4 Dialogflow Bot Çalışıyor");
+  res.send("✅ GPT-4 Webhook çalışıyor");
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`🚀 Sunucu ${PORT} portunda çalışıyor`);
 });
